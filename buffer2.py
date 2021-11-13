@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
-from SegmentTree import MinSegmentTree, SumSegmentTree
+from SegmentTree2 import MinSegmentTree2, SumSegmentTree2
 import os
 
 
@@ -26,7 +26,7 @@ class ReplayBuffer2:
         self.rews_buf = np.zeros([size], dtype=np.float32)
         self.done_buf = np.zeros(size, dtype=np.float32)
         self.last_played_buf = np.zeros([size], dtype=np.float32)
-        self.td_err_buf = np.zeros([size], dtype=np.float32)
+        self.delta_buf = np.zeros([size], dtype=np.float32)
         self.max_size, self.batch_size = size, batch_size
         self.ptr, self.size, = 0, 0
 
@@ -81,14 +81,15 @@ class PrioritizedReplayBuffer2(ReplayBuffer):
         super(PrioritizedReplayBuffer, self).__init__(obs_dim, size, batch_size)
         self.max_priority, self.tree_ptr = 1.0, 0
         self.alpha = alpha
+        self.offset = 1
         
         # capacity must be positive and a power of 2.
         tree_capacity = 1
         while tree_capacity < self.max_size:
             tree_capacity *= 2
 
-        self.sum_tree = SumSegmentTree(tree_capacity)
-        self.min_tree = MinSegmentTree(tree_capacity)
+        self.sum_tree = SumSegmentTree2(tree_capacity)
+        self.min_tree = MinSegmentTree2(tree_capacity)
         
     def store(
         self, 
@@ -129,28 +130,31 @@ class PrioritizedReplayBuffer2(ReplayBuffer):
             indices=indices,
         )
         
-    def update_priorities(self, indices: List[int], priorities: np.ndarray):
+    def update_priorities(self, indices: List[int], deltas: np.ndarray):
         """Update priorities of sampled transitions."""
         assert len(indices) == len(priorities)
 
-        for idx, priority in zip(indices, priorities):
+
+        temp = deltas.argsort()
+        ranks = np.empty_like(temp)
+        ranks[temp] = np.arange(len(deltas)) + self.offset
+        priorities = (1/ranks)**self.alpha
+        max_priority_local = np.max(priorities)
+        self.max_priority = max(self.max_priority, max_priority_local)
+
+
+        for idx, delta, priority in zip(indices, deltas, priorities):
             assert priority > 0
             assert 0 <= idx < len(self)
             # added by me ------------------
-            self.td_err[idx] = priority
-        ranks = self.compute_ranks()
-        priorities = 1/ranks **self.alpha
-        self.max_priority = max(self.max_priority, priority)  # should I remove the items with 0 td_error? and not count it in the ranking - it doesnt matter for max priority
+            self.delta_buf[idx] = delta
+            self.sum_tree[idx] = priority
+            self.min_tree[idx] = priority
+
 
         #TODO
-        # add a method to set items in the tree and update it all 
-        # added by me ^^^^^
-
-
-        # self.sum_tree[idx] = priority ** self.alpha
-        # self.min_tree[idx] = priority ** self.alpha
-
-        # self.max_priority = max(self.max_priority, priority)
+        self.sum_tree.update()
+        self.min_tree.update()
             
     def _sample_proportional(self) -> List[int]:
         """Sample indices based on proportions."""

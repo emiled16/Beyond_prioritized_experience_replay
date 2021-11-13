@@ -159,6 +159,7 @@ class DQNAgent:
         loss_for_prior = elementwise_loss.detach().cpu().numpy()
         new_priorities = loss_for_prior + self.prior_eps
         self.memory.update_priorities(indices, new_priorities)
+        print(self.memory.sum_tree.tree)
 
         return loss.item()
         
