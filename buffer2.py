@@ -151,10 +151,8 @@ class PrioritizedReplayBuffer2(ReplayBuffer):
             self.sum_tree[idx] = priority
             self.min_tree[idx] = priority
 
-
-        #TODO
-        self.sum_tree.update()
-        self.min_tree.update()
+        self.sum_tree.update_tree()
+        self.min_tree.update_tree()
             
     def _sample_proportional(self) -> List[int]:
         """Sample indices based on proportions."""
