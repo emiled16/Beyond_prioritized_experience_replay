@@ -56,7 +56,7 @@ class ReplayBuffer2:
         return self.size
 
 
-class PrioritizedReplayBuffer2(ReplayBuffer):
+class PrioritizedReplayBuffer2(ReplayBuffer2):
     """Prioritized Replay buffer.
     
     Attributes:
@@ -78,7 +78,7 @@ class PrioritizedReplayBuffer2(ReplayBuffer):
         """Initialization."""
         assert alpha >= 0
         
-        super(PrioritizedReplayBuffer, self).__init__(obs_dim, size, batch_size)
+        super(PrioritizedReplayBuffer2, self).__init__(obs_dim, size, batch_size)
         self.max_priority, self.tree_ptr = 1.0, 0
         self.alpha = alpha
         self.offset = 1

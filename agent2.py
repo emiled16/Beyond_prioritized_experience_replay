@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 from SegmentTree import MinSegmentTree, SumSegmentTree
+from SegmentTree2 import MinSegmentTree2, SumSegmentTree2
 from buffer import PrioritizedReplayBuffer, ReplayBuffer
 from model import Network
 
