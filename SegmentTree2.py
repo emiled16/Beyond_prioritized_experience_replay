@@ -83,31 +83,28 @@ class SegmentTree2:
         # while idx >= 1:
         #     self.tree[idx] = self.operation(self.tree[2 * idx], self.tree[2 * idx + 1])
         #     idx //= 2
-    def is_leaf(self,idx):
-        if (idx<(2*capacity)) and (idx>=capacity):
+
+    def is_leaf(self, idx):
+        if (idx<(2*self.capacity)) and (idx>=self.capacity):
             return True
         return False
 
-
-
-    def update_rec(mem,idx):
+    def update_rec(self, mem,idx):
         left_idx = 2*idx
         right_idx = left_idx + 1
-        left_child = mem.tree[int(left_idx)]
-        right_child = mem.tree[int(right_idx)]
+        left_child = self.tree[int(left_idx)]
+        right_child = self.tree[int(right_idx)]
 
-        if mem.is_leaf(left_idx):
+        if self.is_leaf(left_idx):
 
             
-            res = mem.operation(left_child, right_child)
-            mem.tree[idx] = res
+            res = self.operation(left_child, right_child)
+            self.tree[idx] = res
             return res
         else:
-            res = mem.operation(mem.update_rec(left_idx), mem.update_rec(right_idx))
-            mem.tree[idx] = res
-
+            res = self.operation(self.update_rec(left_idx), self.update_rec(right_idx))
+            self.tree[idx] = res
             return res
-
 
 
     def update_tree(self):
@@ -184,8 +181,3 @@ class MinSegmentTree2(SegmentTree2):
     def min(self, start: int = 0, end: int = 0) -> float:
         """Returns min(arr[start], ...,  arr[end])."""
         return super(MinSegmentTree2, self).operate(start, end)
-
-
-memory = SumSegmentTree2(8)
-for i in range(8):
-    memory[i] = i+1

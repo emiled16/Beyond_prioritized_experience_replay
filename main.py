@@ -15,7 +15,7 @@ from IPython.display import clear_output
 from SegmentTree import MinSegmentTree, SumSegmentTree
 from buffer import PrioritizedReplayBuffer, ReplayBuffer
 from model import Network
-from agent import DQNAgent
+from agent2 import DQNAgent2
 import os
 
 IN_COLAB = "google.colab" in sys.modules
@@ -68,7 +68,7 @@ target_update = 100
 epsilon_decay = 1 / 2000
 
 # train
-agent = DQNAgent(env, memory_size, batch_size, target_update, epsilon_decay)
+agent = DQNAgent2(env, memory_size, batch_size, target_update, epsilon_decay)
 
 agent.train(num_frames)
 

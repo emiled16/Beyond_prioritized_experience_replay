@@ -17,7 +17,7 @@ from buffer import PrioritizedReplayBuffer, ReplayBuffer
 from model import Network
 
 
-class DQNAgent:
+class DQNAgent2:
     """DQN Agent interacting with environment.
     
     Attribute:
@@ -165,7 +165,7 @@ class DQNAgent:
         return loss.item()
 
     def update_beta(self,frame_idx):
-        fraction = min(frame_idx / num_frames, 1.0)
+        fraction = min(frame_idx / self.num_frames, 1.0)
         self.beta = self.beta + fraction * (1.0 - self.beta)
 
     def update_eps(self):
@@ -181,7 +181,7 @@ class DQNAgent:
     def train(self, num_frames: int, plotting_interval: int = 200):
         """Train the agent."""
         self.is_test = False
-        
+        self.num_frames = num_frames
         state = self.env.reset()
         update_cnt = 0
         epsilons = []
@@ -210,7 +210,7 @@ class DQNAgent:
             score += reward
             
             # PER: increase beta
-            self.update_beta()
+            self.update_beta(frame_idx)
 
             # if episode ends
             if done:
