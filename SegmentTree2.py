@@ -89,7 +89,7 @@ class SegmentTree2:
             return True
         return False
 
-    def update_rec(self, mem,idx):
+    def update_rec(self, idx):
         left_idx = 2*idx
         right_idx = left_idx + 1
         left_child = self.tree[int(left_idx)]

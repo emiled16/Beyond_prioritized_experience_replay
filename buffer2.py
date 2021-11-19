@@ -40,7 +40,7 @@ class ReplayBuffer2:
         self.rews_buf[self.ptr] = transition['reward']
         self.done_buf[self.ptr] = transition['done']
         self.last_played_buf[self.ptr] = transition['last_played']
-        self.td_err_buf[self.ptr] = transition['td_err']
+        self.delta_buf[self.ptr] = transition['td_err']
         self.ptr = (self.ptr + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
 
@@ -101,6 +101,9 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
         self.sum_tree[self.tree_ptr] = self.max_priority ** self.alpha
         self.min_tree[self.tree_ptr] = self.max_priority ** self.alpha
         self.tree_ptr = (self.tree_ptr + 1) % self.max_size
+        self.sum_tree.update_tree()
+        self.min_tree.update_tree()
+
 
     def sample_batch(self, beta: float = 0.4) -> Dict[str, np.ndarray]:
         """Sample a batch of experiences."""
@@ -164,9 +167,9 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
         return indices
 
     def compute_ranks(self):
-        temp = self.td_err_buf.argsort()
+        temp = self.delta_buf.argsort()
         ranks = np.empty_like(temp)
-        ranks[temp] = np.arange(len(self.td_err))
+        ranks[temp] = np.arange(len(self.delta_buf))
         return ranks
     
     def _calculate_weight(self, idx: int, beta: float):
