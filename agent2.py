@@ -11,9 +11,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
-from SegmentTree import MinSegmentTree, SumSegmentTree
+
 from SegmentTree2 import MinSegmentTree2, SumSegmentTree2
 from buffer import PrioritizedReplayBuffer, ReplayBuffer
+from buffer2 import PrioritizedReplayBuffer2, ReplayBuffer2
 from model import Network
 
 
@@ -94,7 +95,7 @@ class DQNAgent2:
         # In DQN, We used "ReplayBuffer(obs_dim, memory_size, batch_size)"
         self.beta = beta
         self.prior_eps = prior_eps
-        self.memory = PrioritizedReplayBuffer(
+        self.memory = PrioritizedReplayBuffer2(
             obs_dim, memory_size, batch_size, alpha
         )
         
@@ -190,8 +191,9 @@ class DQNAgent2:
         score = 0
 
         for frame_idx in range(1, num_frames + 1):
-            keys = ['obs', 'next_obs', 'action', 'reward', 'done', 'td_err', 'last_played']
-            transition = dict.fromkeys(keys)
+            # keys = ['obs', 'next_obs', 'action', 'reward', 'done', 'td_err', 'last_played']
+            # transition = dict.fromkeys(keys)
+            transition = dict()
 
             # select the action to take
             action = self.select_action(state)
@@ -232,6 +234,8 @@ class DQNAgent2:
 
             # plotting
             if frame_idx % plotting_interval == 0:
+                print(losses)
+                print(epsilons)
                 self._plot(frame_idx, scores, losses, epsilons)
                 
         self.env.close()
