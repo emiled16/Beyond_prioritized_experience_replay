@@ -132,7 +132,7 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
 
     def update_priorities(self, indices: List[int], deltas: np.ndarray):
         """Update priorities of sampled transitions."""
-        assert len(indices) == len(priorities)
+        assert len(indices) == len(deltas)
         temp = deltas.argsort()
         ranks = np.empty_like(temp)
         ranks[temp] = np.arange(len(deltas)) + self.offset
