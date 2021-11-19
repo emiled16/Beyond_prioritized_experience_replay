@@ -93,14 +93,10 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
         
     def store(
         self, 
-        obs: np.ndarray, 
-        act: int, 
-        rew: float, 
-        next_obs: np.ndarray, 
-        done: bool
+        transition: Dict
     ):
         """Store experience and priority."""
-        super().store(obs, act, rew, next_obs, done)
+        super().store(transition)
         
         self.sum_tree[self.tree_ptr] = self.max_priority ** self.alpha
         self.min_tree[self.tree_ptr] = self.max_priority ** self.alpha

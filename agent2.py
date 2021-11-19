@@ -145,6 +145,7 @@ class DQNAgent2:
         """Update the model by gradient descent."""
         # PER needs beta to calculate weights
         samples = self.memory.sample_batch(self.beta)
+        print(samples)
         weights = torch.FloatTensor(
             samples["weights"].reshape(-1, 1)
         ).to(self.device)
@@ -179,7 +180,7 @@ class DQNAgent2:
 
 
         
-    def train(self, num_frames: int, plotting_interval: int = 200):
+    def train(self, num_frames: int, plotting_interval: int = 10):
         """Train the agent."""
         self.is_test = False
         self.num_frames = num_frames
@@ -208,6 +209,8 @@ class DQNAgent2:
             transition['last_played'] = frame_idx
             transition['td_err'] = 0
 
+            self.memory.store(transition)
+
             state = next_state
             score += reward
             
@@ -234,6 +237,7 @@ class DQNAgent2:
 
             # plotting
             if frame_idx % plotting_interval == 0:
+                print('YOO')
                 print(losses)
                 print(epsilons)
                 self._plot(frame_idx, scores, losses, epsilons)
