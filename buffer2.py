@@ -77,16 +77,18 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
     ):
         """Initialization."""
         assert alpha >= 0
+
+        tree_capacity = 1
+        while tree_capacity < size:
+            tree_capacity *= 2
         
-        super(PrioritizedReplayBuffer2, self).__init__(obs_dim, size, batch_size)
+        super(PrioritizedReplayBuffer2, self).__init__(obs_dim, tree_capacity, batch_size)
         self.max_priority, self.tree_ptr = 1.0, 0
         self.alpha = alpha
         self.offset = 1
         
         # capacity must be positive and a power of 2.
-        tree_capacity = 1
-        while tree_capacity < self.max_size:
-            tree_capacity *= 2
+        
 
         self.sum_tree = SumSegmentTree2(tree_capacity)
         self.min_tree = MinSegmentTree2(tree_capacity)
@@ -133,7 +135,7 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
     def update_priorities(self, indices: List[int], deltas: np.ndarray):
         """Update priorities of sampled transitions."""
         ###########################################################################################
-        # TODO
+        # TODO --  I did it, just need to verify
         # NEED TO CORRECT THE RANKING SYSTEM RIGHT NOW IT IS USING THE RANKING WITHIN THE BATCH WHILE THIS IS NOT WHAT WE ARE LOOKING FOR
         ###########################################################################################
         # print(deltas)
@@ -167,16 +169,21 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
         ########################################
         deltas = deltas.reshape(-1)
         self.delta_buf[indices] = deltas
-        temp =  self.delta_buf.argsort()
+        temp =  self.delta_buf.argsort()[::-1]  # from biggest = 1 ....
         ranks = np.empty_like(temp)
         ranks[temp] = np.arange(len(self.delta_buf)) + self.offset
+        # print('rank len')
+        # print(len(ranks))
         priorities = (1/ranks)**self.alpha
         max_priority_local = np.max(priorities)
         self.max_priority = max(self.max_priority, max_priority_local)
         t = len(self.sum_tree.tree)/2
-
+        # print(self.sum_tree.tree)
+        # print(t)
+        # print(len(priorities))
         self.sum_tree.tree[int(t):] = priorities
         self.min_tree.tree[int(t):] = priorities
+        # print(self.sum_tree.tree)
 
         self.sum_tree.update_tree()
         self.min_tree.update_tree()
