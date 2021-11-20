@@ -132,24 +132,55 @@ class PrioritizedReplayBuffer2(ReplayBuffer2):
 
     def update_priorities(self, indices: List[int], deltas: np.ndarray):
         """Update priorities of sampled transitions."""
+        ###########################################################################################
+        # TODO
+        # NEED TO CORRECT THE RANKING SYSTEM RIGHT NOW IT IS USING THE RANKING WITHIN THE BATCH WHILE THIS IS NOT WHAT WE ARE LOOKING FOR
+        ###########################################################################################
+        # print(deltas)
         assert len(indices) == len(deltas)
-        temp = deltas.argsort()
+        # temp = deltas.reshape(-1).argsort()
+        # # print('temp shape')
+        # # print(temp.shape)
+        # ranks = np.empty_like(temp)
+        # # print('ranks shape')
+        # # print(ranks.shape)
+        # # print('np.arange(len(deltas)).reshape(ranks.shape) shape ')
+        # # print(np.arange(len(deltas)).reshape(ranks.shape).shape)
+
+        # ranks[temp] = np.arange(len(deltas)) + self.offset
+        
+        # priorities = (1/ranks)**self.alpha
+        # max_priority_local = np.max(priorities)
+        # self.max_priority = max(self.max_priority, max_priority_local)
+
+        # for idx, delta, priority in zip(indices, deltas, priorities):
+        #     assert priority > 0
+        #     assert 0 <= idx < len(self)
+        #     # added by me ------------------
+        #     self.delta_buf[idx] = delta
+        #     self.sum_tree[idx] = priority
+        #     self.min_tree[idx] = priority
+
+        # self.sum_tree.update_tree()
+        # self.min_tree.update_tree()
+
+        ########################################
+        deltas = deltas.reshape(-1)
+        self.delta_buf[indices] = deltas
+        temp =  self.delta_buf.argsort()
         ranks = np.empty_like(temp)
-        ranks[temp] = np.arange(len(deltas)) + self.offset
+        ranks[temp] = np.arange(len(self.delta_buf)) + self.offset
         priorities = (1/ranks)**self.alpha
         max_priority_local = np.max(priorities)
         self.max_priority = max(self.max_priority, max_priority_local)
+        t = len(self.sum_tree.tree)/2
 
-        for idx, delta, priority in zip(indices, deltas, priorities):
-            assert priority > 0
-            assert 0 <= idx < len(self)
-            # added by me ------------------
-            self.delta_buf[idx] = delta
-            self.sum_tree[idx] = priority
-            self.min_tree[idx] = priority
+        self.sum_tree.tree[int(t):] = priorities
+        self.min_tree.tree[int(t):] = priorities
 
         self.sum_tree.update_tree()
         self.min_tree.update_tree()
+
             
     def _sample_proportional(self) -> List[int]:
         """Sample indices based on proportions."""
