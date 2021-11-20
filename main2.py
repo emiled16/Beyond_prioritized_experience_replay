@@ -63,9 +63,9 @@ seed_torch(seed)
 env.seed(seed)
 
 # parameters
-# num_frames = 20000
-num_frames = 200
-memory_size = 20
+num_frames = 20000
+# num_frames = 200
+memory_size = 64
 # batch_size = 5
 batch_size = 5
 target_update = 100
