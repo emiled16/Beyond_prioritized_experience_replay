@@ -109,7 +109,7 @@ class DQNAgent2:
         self.optimizer = optim.Adam(self.dqn.parameters())
 
         # transition to store in memory
-        self.transition = list()
+        # self.transition = list()
         
         # mode: train / test
         self.is_test = False
@@ -178,7 +178,7 @@ class DQNAgent2:
         self.epsilons.append(self.epsilon)
 
 
-        
+
     def train(self, num_frames: int, plotting_interval: int = 200):
         """Train the agent."""
         self.is_test = False
@@ -239,7 +239,7 @@ class DQNAgent2:
                 # print('YOO')
                 # print(losses)
                 # print(epsilons)
-                self._plot(frame_idx, scores, losses, epsilons)
+                self._plot(frame_idx, scores, losses, self.epsilons)
                 
         self.env.close()
                 

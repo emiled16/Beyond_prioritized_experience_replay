@@ -25,22 +25,20 @@ class ReplayBuffer:
         self.acts_buf = np.zeros([size], dtype=np.float32)
         self.rews_buf = np.zeros([size], dtype=np.float32)
         self.done_buf = np.zeros(size, dtype=np.float32)
+        self.last_played_buf = np.zeros([size], dtype=np.float32)
         self.max_size, self.batch_size = size, batch_size
         self.ptr, self.size, = 0, 0
 
     def store(
         self,
-        obs: np.ndarray,
-        act: np.ndarray, 
-        rew: float, 
-        next_obs: np.ndarray, 
-        done: bool,
+        transition: Dict
     ):
-        self.obs_buf[self.ptr] = obs
-        self.next_obs_buf[self.ptr] = next_obs
-        self.acts_buf[self.ptr] = act
-        self.rews_buf[self.ptr] = rew
-        self.done_buf[self.ptr] = done
+        self.obs_buf[self.ptr] = transition['obs']
+        self.next_obs_buf[self.ptr] = transition['next_obs']
+        self.acts_buf[self.ptr] = transition['action']
+        self.rews_buf[self.ptr] = transition['reward']
+        self.done_buf[self.ptr] = transition['done']
+        self.last_played_buf[self.ptr] = transition['last_played']
         self.ptr = (self.ptr + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
 
@@ -92,14 +90,10 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         
     def store(
         self, 
-        obs: np.ndarray, 
-        act: int, 
-        rew: float, 
-        next_obs: np.ndarray, 
-        done: bool
+        transition: Dict
     ):
         """Store experience and priority."""
-        super().store(obs, act, rew, next_obs, done)
+        super().store(transition)
         
         self.sum_tree[self.tree_ptr] = self.max_priority ** self.alpha
         self.min_tree[self.tree_ptr] = self.max_priority ** self.alpha

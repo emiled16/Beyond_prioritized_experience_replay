@@ -79,6 +79,7 @@ class DQNAgent:
         self.epsilon_decay = epsilon_decay
         self.max_epsilon = max_epsilon
         self.min_epsilon = min_epsilon
+        self.epsilons = []
         self.target_update = target_update
         self.gamma = gamma
         
@@ -107,7 +108,7 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.dqn.parameters())
 
         # transition to store in memory
-        self.transition = list()
+        # self.transition = list()
         
         # mode: train / test
         self.is_test = False
@@ -123,8 +124,8 @@ class DQNAgent:
             ).argmax()
             selected_action = selected_action.detach().cpu().numpy()
         
-        if not self.is_test:
-            self.transition = [state, selected_action]
+        # if not self.is_test:
+        #     self.transition = [state, selected_action]
         
         return selected_action
 
@@ -132,9 +133,9 @@ class DQNAgent:
         """Take an action and return the response of the env."""
         next_state, reward, done, _ = self.env.step(action)
 
-        if not self.is_test:
-            self.transition += [reward, next_state, done]
-            self.memory.store(*self.transition)
+        # if not self.is_test:
+        #     self.transition += [reward, next_state, done]
+        #     self.memory.store(*self.transition)
     
         return next_state, reward, done
 
@@ -163,10 +164,21 @@ class DQNAgent:
 
         return loss.item()
         
+    def update_beta(self,frame_idx):
+        fraction = min(frame_idx / self.num_frames, 1.0)
+        self.beta = self.beta + fraction * (1.0 - self.beta)
+
+    def update_eps(self):
+        self.epsilon = max(
+                    self.min_epsilon, self.epsilon - (
+                        self.max_epsilon - self.min_epsilon
+                    ) * self.epsilon_decay
+                )
+        self.epsilons.append(self.epsilon)
     def train(self, num_frames: int, plotting_interval: int = 200):
         """Train the agent."""
         self.is_test = False
-        
+        self.num_frames = num_frames
         state = self.env.reset()
         update_cnt = 0
         epsilons = []
@@ -175,15 +187,24 @@ class DQNAgent:
         score = 0
 
         for frame_idx in range(1, num_frames + 1):
+            transition = dict()
             action = self.select_action(state)
             next_state, reward, done = self.step(action)
 
+            transition['obs'] = state
+            transition['next_obs'] = next_state
+            transition['action'] = action
+            transition['reward'] = reward
+            transition['done'] = done
+            transition['last_played'] = frame_idx
+            # transition['td_err'] = 0
             state = next_state
             score += reward
             
             # PER: increase beta
-            fraction = min(frame_idx / num_frames, 1.0)
-            self.beta = self.beta + fraction * (1.0 - self.beta)
+            self.update_beta(frame_idx)
+            # fraction = min(frame_idx / num_frames, 1.0)
+            # self.beta = self.beta + fraction * (1.0 - self.beta)
 
             # if episode ends
             if done:
@@ -197,13 +218,14 @@ class DQNAgent:
                 losses.append(loss)
                 update_cnt += 1
                 
-                # linearly decrease epsilon
-                self.epsilon = max(
-                    self.min_epsilon, self.epsilon - (
-                        self.max_epsilon - self.min_epsilon
-                    ) * self.epsilon_decay
-                )
-                epsilons.append(self.epsilon)
+                self.update_eps()
+                # # linearly decrease epsilon
+                # self.epsilon = max(
+                #     self.min_epsilon, self.epsilon - (
+                #         self.max_epsilon - self.min_epsilon
+                #     ) * self.epsilon_decay
+                # )
+                # epsilons.append(self.epsilon)
                 
                 # if hard update is needed
                 if update_cnt % self.target_update == 0:
@@ -211,7 +233,7 @@ class DQNAgent:
 
             # plotting
             if frame_idx % plotting_interval == 0:
-                self._plot(frame_idx, scores, losses, epsilons)
+                self._plot(frame_idx, scores, losses, self.epsilons)
                 
         self.env.close()
                 
