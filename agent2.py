@@ -246,7 +246,7 @@ class DQNAgent2:
                 # print(epsilons)
                 self._plot(episode, scores, losses, self.epsilons)
                 
-                if episode == num_episodes:
+            if episode == num_episodes:
                 break 
         self.env.close()
                 
