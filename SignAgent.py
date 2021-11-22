@@ -1,3 +1,9 @@
+#
+#
+#
+# THIS FILE IS TRASH ONLY TO USE FOR REF
+#
+#
 import sys
 import os
 import random
@@ -11,15 +17,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
-
-from SegmentTree2 import MinSegmentTree2, SumSegmentTree2
+from SegmentTree import MinSegmentTree, SumSegmentTree
 from buffer import PrioritizedReplayBuffer, ReplayBuffer
+from SegmentTree2 import MinSegmentTree2, SumSegmentTree2
 from buffer2 import PrioritizedReplayBuffer2, ReplayBuffer2
 from model import Network
 
 
-class DQNAgent2:
-    """DQN Agent interacting with environment.
+class hybridDQNAgent:
+    """hybridDQN Agent interacting with environment.
     
     Attribute:
         env (gym.Env): openAI Gym environment
@@ -54,6 +60,7 @@ class DQNAgent2:
         alpha: float = 0.2,
         beta: float = 0.6,
         prior_eps: float = 1e-6,
+        priority_type: str = 'priority'
     ):
         """Initialization.
         
@@ -71,8 +78,15 @@ class DQNAgent2:
             beta (float): determines how much importance sampling is used
             prior_eps (float): guarantees every transition can be sampled
         """
+        assert priority_type in ['priority', 'rank'], "priority_type should be one of these 2 strings: 'priority', 'rank'"
+        if priority_type == 'priority':
+            memory = PrioritizedReplayBuffer
+        else:
+            memory = PrioritizedReplayBuffer2
+
         obs_dim = env.observation_space.shape[0]
         action_dim = env.action_space.n
+        
         self.env = env
         
         self.batch_size = batch_size
@@ -94,10 +108,14 @@ class DQNAgent2:
         # In DQN, We used "ReplayBuffer(obs_dim, memory_size, batch_size)"
         self.beta = beta
         self.prior_eps = prior_eps
-        self.memory = PrioritizedReplayBuffer2(
+        # positive
+        self.memory_positive = memory(
             obs_dim, memory_size, batch_size, alpha
         )
-        
+
+        self.memory_negative = memory(
+            obs_dim, memory_size, batch_size, alpha
+        )
 
         # networks: dqn, dqn_target
         self.dqn = Network(obs_dim, action_dim).to(self.device)
@@ -142,30 +160,55 @@ class DQNAgent2:
 
     def update_model(self) -> torch.Tensor:
         """Update the model by gradient descent."""
+
+        # Negative
         # PER needs beta to calculate weights
-        samples = self.memory.sample_batch(self.beta)
-        # print(samples)
-        weights = torch.FloatTensor(
-            samples["weights"].reshape(-1, 1)
+        samples_negative= self.memory_negative.sample_batch(self.beta)
+        weights_negative = torch.FloatTensor(
+            samples_negative["weights"].reshape(-1, 1)
         ).to(self.device)
-        indices = samples["indices"]
+        indices_negative = samples_negative["indices"]
 
         # PER: importance sampling before average
-        elementwise_loss = self._compute_dqn_loss(samples)
-        loss = torch.mean(elementwise_loss * weights)
+        elementwise_loss_negative = self._compute_dqn_loss(samples_negative)
+        loss_negative = torch.mean(elementwise_loss_negative * weights_negative)
+
+        # Positive
+        # PER needs beta to calculate weights
+        sample_positive = self.memory_positive.sample_batch(self.beta)
+        weights_positive = torch.FloatTensor(
+            samples_positive["weights"].reshape(-1, 1)
+        ).to(self.device)
+        indices_positive = samples_positive["indices"]
+
+        # PER: importance sampling before average
+        elementwise_loss_positive = self._compute_dqn_loss(samples_positive)
+        loss_positive = torch.mean(elementwise_loss_positive * weights_positive)
+
+        # Entire loss
+        loss = loss_negative + loss_positive
+
+
 
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         
+        # Negative
         # PER: update priorities
-        loss_for_prior = elementwise_loss.detach().cpu().numpy()
-        new_priorities = loss_for_prior + self.prior_eps
-        self.memory.update_priorities(indices, new_priorities)
+        loss_for_prior_negative = elementwise_loss_negative.detach().cpu().numpy()
+        new_priorities_negative = loss_for_prior_negative + self.prior_eps
+        self.memory_negative.update_priorities(indices_negative, new_priorities_negative)
+
+        # Positive
+        # PER: update priorities
+        loss_for_prior_positive = elementwise_loss_positive.detach().cpu().numpy()
+        new_priorities_positive = loss_for_prior_positive + self.prior_eps
+        self.memory_positive.update_priorities(indices_positive, new_priorities_positive)
 
         return loss.item()
-
-    def update_beta(self,frame_idx):
+        
+    def update_beta(self, frame_idx):
         fraction = min(frame_idx / self.num_frames, 1.0)
         self.beta = self.beta + fraction * (1.0 - self.beta)
 
@@ -176,9 +219,6 @@ class DQNAgent2:
                     ) * self.epsilon_decay
                 )
         self.epsilons.append(self.epsilon)
-
-
-
     # def train(self, num_frames: int, plotting_interval: int = 200):
     def train(self, num_episodes: int, plotting_interval: int = 20):
         """Train the agent."""
@@ -194,13 +234,8 @@ class DQNAgent2:
 
         # for frame_idx in range(1, num_frames + 1):
         while True:
-            # keys = ['obs', 'next_obs', 'action', 'reward', 'done', 'td_err', 'last_played']
-            # transition = dict.fromkeys(keys)
             transition = dict()
-
-            # select the action to take
             action = self.select_action(state)
-            # step
             next_state, reward, done = self.step(action)
 
             transition['obs'] = state
@@ -208,30 +243,38 @@ class DQNAgent2:
             transition['action'] = action
             transition['reward'] = reward
             transition['done'] = done
+            # transition['last_played'] = frame_idx
             transition['last_played'] = episode
-            transition['td_err'] = 0
-
-            self.memory.store(transition)
-
+            self.memory_priority.store(transition)
+            self.memory_rank.store(transition)
+            # transition['td_err'] = 0
             state = next_state
             score += reward
+
             
             # PER: increase beta
+            # self.update_beta(frame_idx)
             self.update_beta(episode)
+            # fraction = min(frame_idx / num_frames, 1.0)
+            # self.beta = self.beta + fraction * (1.0 - self.beta)
 
             # if episode ends
             if done:
                 state = self.env.reset()
                 scores.append(score)
                 score = 0
-                episode +=1
+                episode += 1
+                # print(episode)
+
 
             # if training is ready
-            if len(self.memory) >= self.batch_size:
+            if len(self.memory_priority) >= self.batch_size:
                 loss = self.update_model()
+                # print(loss)
                 losses.append(loss)
                 update_cnt += 1
 
+                 # linearly decrease epsilon
                 self.update_eps()
 
                 # if hard update is needed
@@ -241,13 +284,13 @@ class DQNAgent2:
             # plotting
             # if frame_idx % plotting_interval == 0:
             if episode % plotting_interval == 0:
-                # print('YOO')
-                # print(losses)
-                # print(epsilons)
+                # print(scores)
+                # print(np.mean(scores[-10:]))
+                # self._plot(frame_idx, scores, losses, self.epsilons)
                 self._plot(episode, scores, losses, self.epsilons)
-                
+
             if episode == num_episodes:
-                break 
+                break
         self.env.close()
                 
     def test(self) -> List[np.ndarray]:
