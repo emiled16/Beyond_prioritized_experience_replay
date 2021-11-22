@@ -175,10 +175,12 @@ class DQNAgent:
                     ) * self.epsilon_decay
                 )
         self.epsilons.append(self.epsilon)
-    def train(self, num_frames: int, plotting_interval: int = 200):
+    # def train(self, num_frames: int, plotting_interval: int = 200):
+    def train(self, num_episodes: int, plotting_interval: int = 20):
         """Train the agent."""
         self.is_test = False
-        self.num_frames = num_frames
+        self.num_frames = num_episodes # num_frames
+        episode = 1
         state = self.env.reset()
         update_cnt = 0
         epsilons = []
@@ -186,7 +188,8 @@ class DQNAgent:
         scores = []
         score = 0
 
-        for frame_idx in range(1, num_frames + 1):
+        # for frame_idx in range(1, num_frames + 1):
+        while True:
             transition = dict()
             action = self.select_action(state)
             next_state, reward, done = self.step(action)
@@ -196,13 +199,17 @@ class DQNAgent:
             transition['action'] = action
             transition['reward'] = reward
             transition['done'] = done
-            transition['last_played'] = frame_idx
+            # transition['last_played'] = frame_idx
+            transition['last_played'] = episode
+            self.memory.store(transition)
             # transition['td_err'] = 0
             state = next_state
             score += reward
+
             
             # PER: increase beta
-            self.update_beta(frame_idx)
+            # self.update_beta(frame_idx)
+            self.update_beta(episode)
             # fraction = min(frame_idx / num_frames, 1.0)
             # self.beta = self.beta + fraction * (1.0 - self.beta)
 
@@ -211,30 +218,34 @@ class DQNAgent:
                 state = self.env.reset()
                 scores.append(score)
                 score = 0
+                episode += 1
+                # print(episode)
+
 
             # if training is ready
             if len(self.memory) >= self.batch_size:
                 loss = self.update_model()
+                # print(loss)
                 losses.append(loss)
                 update_cnt += 1
-                
+
+                 # linearly decrease epsilon
                 self.update_eps()
-                # # linearly decrease epsilon
-                # self.epsilon = max(
-                #     self.min_epsilon, self.epsilon - (
-                #         self.max_epsilon - self.min_epsilon
-                #     ) * self.epsilon_decay
-                # )
-                # epsilons.append(self.epsilon)
-                
+
                 # if hard update is needed
                 if update_cnt % self.target_update == 0:
                     self._target_hard_update()
 
             # plotting
-            if frame_idx % plotting_interval == 0:
-                self._plot(frame_idx, scores, losses, self.epsilons)
-                
+            # if frame_idx % plotting_interval == 0:
+            if episode % plotting_interval == 0:
+                # print(scores)
+                # print(np.mean(scores[-10:]))
+                # self._plot(frame_idx, scores, losses, self.epsilons)
+                self._plot(episode, scores, losses, self.epsilons)
+
+            if episode == num_episodes:
+                break                
         self.env.close()
                 
     def test(self) -> List[np.ndarray]:

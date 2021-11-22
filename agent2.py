@@ -179,10 +179,12 @@ class DQNAgent2:
 
 
 
-    def train(self, num_frames: int, plotting_interval: int = 200):
+    # def train(self, num_frames: int, plotting_interval: int = 200):
+    def train(self, num_episodes: int, plotting_interval: int = 200):
         """Train the agent."""
         self.is_test = False
-        self.num_frames = num_frames
+        self.num_frames = num_episodes # num_frames
+        episode = 1
         state = self.env.reset()
         update_cnt = 0
         epsilons = []
@@ -190,7 +192,8 @@ class DQNAgent2:
         scores = []
         score = 0
 
-        for frame_idx in range(1, num_frames + 1):
+        # for frame_idx in range(1, num_frames + 1):
+        while True:
             # keys = ['obs', 'next_obs', 'action', 'reward', 'done', 'td_err', 'last_played']
             # transition = dict.fromkeys(keys)
             transition = dict()
@@ -205,7 +208,7 @@ class DQNAgent2:
             transition['action'] = action
             transition['reward'] = reward
             transition['done'] = done
-            transition['last_played'] = frame_idx
+            transition['last_played'] = episode
             transition['td_err'] = 0
 
             self.memory.store(transition)
@@ -214,13 +217,14 @@ class DQNAgent2:
             score += reward
             
             # PER: increase beta
-            self.update_beta(frame_idx)
+            self.update_beta(episode)
 
             # if episode ends
             if done:
                 state = self.env.reset()
                 scores.append(score)
                 score = 0
+                episode +=1
 
             # if training is ready
             if len(self.memory) >= self.batch_size:
@@ -235,12 +239,15 @@ class DQNAgent2:
                     self._target_hard_update()
 
             # plotting
-            if frame_idx % plotting_interval == 0:
+            # if frame_idx % plotting_interval == 0:
+            if episode % plotting_interval == 0:
                 # print('YOO')
                 # print(losses)
                 # print(epsilons)
-                self._plot(frame_idx, scores, losses, self.epsilons)
+                self._plot(episode, scores, losses, self.epsilons)
                 
+                if episode == num_episodes:
+                break 
         self.env.close()
                 
     def test(self) -> List[np.ndarray]:
