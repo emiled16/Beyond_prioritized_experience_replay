@@ -147,7 +147,7 @@ class DQNAgent3:
             samples["weights"].reshape(-1, 1)
         ).to(self.device)
         indices = samples["indices"]
-        # print('******',indices)
+
         # PER: importance sampling before average
         elementwise_loss, pos_neg_loss = self._compute_dqn_loss(samples)
         loss = torch.mean(elementwise_loss * weights)
@@ -158,26 +158,17 @@ class DQNAgent3:
         
         # PER: update priorities
         loss_for_prior = elementwise_loss.detach().cpu().numpy()
-        pos_neg_loss_np = pos_neg_loss.detach().cpu().numpy()
-        # print(self.memory.delta_buf[indices].shape, loss_for_prior.shape)
+        
+        # for boosting positive td errors..
+        # pos_neg_loss_np = pos_neg_loss.detach().cpu().numpy()
+        # new_priorities = np.squeeze(loss_for_prior) + self.prior_eps
+        # positive_indices = np.where(np.squeeze(pos_neg_loss_np) > 0)
+        # neg_indices = np.where(np.squeeze(pos_neg_loss_np) <= 0)
+        # new_priorities[positive_indices] += 0.001
         
         # for regular td error
         # new_priorities = loss_for_prior + self.prior_eps
 
-        # postive indices - increase priority
-        new_priorities = np.squeeze(loss_for_prior) + self.prior_eps
-        # print('$$$', np.squeeze(loss_for_prior))
-        # print(pos_neg_loss_np.shape)
-        # print(indices[np.squeeze(pos_neg_loss_np) > 0])
-        # print('!!!',np.squeeze(pos_neg_loss_np))
-        
-        positive_indices = np.where(np.squeeze(pos_neg_loss_np) > 0)
-        neg_indices = np.where(np.squeeze(pos_neg_loss_np) <= 0)
-        print('&&&',neg_indices)
-        print('@@@',positive_indices)
-        # print('###',new_priorities[positive_indices])
-        new_priorities[positive_indices] += 0.001
-        # print('@@@', np.squeeze(new_priorities))
         # for TD differential error
         # new_priorities = np.abs(self.memory.delta_buf[indices] - np.squeeze(loss_for_prior)) + self.prior_eps
         
@@ -185,7 +176,6 @@ class DQNAgent3:
         # new_priorities = np.abs(np.squeeze(loss_for_prior) - (0.0001 * self.memory.last_played_buf[indices])) + self.prior_eps
         self.memory.update_priorities(indices, new_priorities)
         self.memory.delta_buf[indices]=np.squeeze(loss_for_prior)
-        # print(self.memory.sum_tree.tree)
 
         return loss.item()
         
@@ -225,7 +215,7 @@ class DQNAgent3:
             transition['action'] = action
             transition['reward'] = reward
             transition['done'] = done
-            transition['last_played'] = episode
+            transition['last_played'] = step_count
             transition['td_err'] = 0
             self.memory.store(transition)
             # transition['td_err'] = 0
