@@ -16,7 +16,7 @@ from SegmentTree import MinSegmentTree, SumSegmentTree
 from buffer import PrioritizedReplayBuffer, ReplayBuffer
 from model import Network
 # from agent2 import DQNAgent2
-from Copy_of_agent3 import DQNAgent3
+from agentv import DQNAgentv
 import os
 
 
@@ -46,6 +46,8 @@ if IN_COLAB:
 # environment
 env_id = "CartPole-v0"
 env = gym.make(env_id)
+#env_id = "LunarLander-v2"
+#env = gym.make(env_id)
 if IN_COLAB:
     env = gym.wrappers.Monitor(env, "videos", force=True)
 
@@ -71,7 +73,7 @@ target_update = 100
 epsilon_decay = 1 / 2000
 
 # train
-agent = DQNAgent3(env, memory_size, batch_size, target_update, epsilon_decay)
+agent = DQNAgentv(env, memory_size, batch_size, target_update, epsilon_decay)
 
 agent.train(num_frames)
 

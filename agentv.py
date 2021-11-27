@@ -12,11 +12,11 @@ import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 from SegmentTree import MinSegmentTree, SumSegmentTree
-from Copy_of_buffer3 import PrioritizedReplayBuffer3, ReplayBuffer3
+from bufferv import PrioritizedReplayBufferv, ReplayBufferv
 from model import Network
 
 
-class DQNAgent3:
+class DQNAgentv:
     """DQN Agent interacting with environment.
     
     Attribute:
@@ -93,7 +93,7 @@ class DQNAgent3:
         # In DQN, We used "ReplayBuffer(obs_dim, memory_size, batch_size)"
         self.beta = beta
         self.prior_eps = prior_eps
-        self.memory = PrioritizedReplayBuffer3(
+        self.memory = PrioritizedReplayBufferv(
             obs_dim, memory_size, batch_size, alpha
         )
         
@@ -186,7 +186,7 @@ class DQNAgent3:
         
         # boost with episode returns
         #new_priorities = np.abs(self.memory.delta_reward[indices] - np.squeeze(returns)) + self.prior_eps
-        new_priorities =  np.squeeze(returns) + self.prior_eps
+        new_priorities =  np.abs(np.squeeze(returns)) + self.prior_eps
 
         #print(new_priorities)
 

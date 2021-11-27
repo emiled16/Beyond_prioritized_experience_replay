@@ -16,7 +16,7 @@ from SegmentTree import MinSegmentTree, SumSegmentTree
 import os
 
 
-class ReplayBuffer3:
+class ReplayBufferv:
     """A simple numpy replay buffer."""
 
     def __init__(self, obs_dim: int, size: int, batch_size: int = 32):
@@ -59,7 +59,7 @@ class ReplayBuffer3:
         return self.size
 
 
-class PrioritizedReplayBuffer3(ReplayBuffer3):
+class PrioritizedReplayBufferv(ReplayBufferv):
     """Prioritized Replay buffer.
     
     Attributes:
@@ -81,7 +81,7 @@ class PrioritizedReplayBuffer3(ReplayBuffer3):
         """Initialization."""
         assert alpha >= 0
         
-        super(PrioritizedReplayBuffer3, self).__init__(obs_dim, size, batch_size)
+        super(PrioritizedReplayBufferv, self).__init__(obs_dim, size, batch_size)
         self.max_priority, self.tree_ptr = 30.0, 0
         self.alpha = alpha
         
