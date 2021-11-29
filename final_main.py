@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from final_agent import DQNAgent
 
-def run_experimet(env_id="CartPole-v0", seed=777, num_episodes=2000, memory_size=10000,
+def run_experiment(env_id="CartPole-v0", seed=777, num_episodes=2000, memory_size=10000,
                   batch_size=32, target_update=100, epsilon_decay=1/2000,
                   alpha: float = 0.2, beta: float = 0.6, prior_eps: float = 1e-6,
                   staleness=0.0001, positive_reward=0.0001, differential=False,
