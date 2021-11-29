@@ -221,6 +221,7 @@ class DQNAgentv:
         scores = []
         score = 0
         step_count = 1
+        reward_t1=0  #t-1     
 
         # for frame_idx in range(1, num_frames + 1):
         while True:
@@ -228,6 +229,10 @@ class DQNAgentv:
             action = self.select_action(state)
             next_state, reward, done = self.step(action)
             step_count += 1
+
+            returns=reward+self.gamma*reward_t1
+            reward_t1=returns
+
             transition['obs'] = state
             transition['next_obs'] = next_state
             transition['action'] = action
@@ -235,13 +240,12 @@ class DQNAgentv:
             transition['done'] = done
             transition['last_played'] = step_count
             transition['td_err'] = 0
-            transition['return'] = score
+            transition['return'] = returns
             self.memory.store(transition)
             # transition['td_err'] = 0
             state = next_state
             score += reward
-
-            
+                       
             # PER: increase beta
             # self.update_beta(frame_idx)
             self.update_beta(episode)
@@ -254,6 +258,7 @@ class DQNAgentv:
                 scores.append(score)
                 score = 0
                 episode += 1
+                reward_t1=0
                 # print(episode)
 
 
