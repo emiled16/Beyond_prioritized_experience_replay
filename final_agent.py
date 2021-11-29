@@ -1,24 +1,20 @@
-import sys
-import os
-import random
 from typing import Dict, List, Tuple
 
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
 
-from final_buffer import ReplayBuffer, PrioritizedReplayBuffer
+from final_buffer import PrioritizedReplayBuffer
 from final_model import Network
 
 
-class DQNAgent2:
+class DQNAgent:
     """DQN Agent interacting with environment.
-    
+
     Attribute:
         env (gym.Env): openAI Gym environment
         memory (ReplayBuffer): replay memory to store transitions
@@ -32,7 +28,7 @@ class DQNAgent2:
         dqn (Network): model to train and select actions
         dqn_target (Network): target model to update
         optimizer (torch.optim): optimizer for training dqn
-        transition (list): transition information including 
+        transition (list): transition information including
                            state, action, reward, next_state, done
         beta (float): determines how much importance sampling is used
         prior_eps (float): guarantees every transition can be sampled
@@ -94,7 +90,7 @@ class DQNAgent2:
         self.positive_reward = positive_reward
         self.differential = differential
         self.priority_based = priority_based
-        self.episodic  = episodic
+        self.episodic = episodic
 
         # device: cpu / gpu
         self.device = torch.device(
@@ -205,7 +201,7 @@ class DQNAgent2:
             new_deltas = np.abs(np.squeeze(loss_for_prior) - (self.staleness * self.global_step_count))
 
         selected_memory.delta_buf[indices] = new_deltas
-        selected_memory.last_played_buf = [self.global_step_count] * len(indices)
+        selected_memory.last_played_buf[indices] = [self.global_step_count] * len(indices)
 
         new_priorities = new_deltas
 
@@ -215,53 +211,6 @@ class DQNAgent2:
         new_priorities += self.prior_eps
 
         selected_memory.update_priorities(indices, new_priorities)
-
-    # def update_model(self) -> torch.Tensor:
-    #     """Update the model by gradient descent."""
-    #     # PER needs beta to calculate weights
-    #     samples = self.memory.sample_batch(self.beta)
-
-    #     weights = torch.FloatTensor(
-    #         samples["weights"].reshape(-1, 1)
-    #     ).to(self.device)
-    #     indices = samples["indices"]
-
-    #     # PER: importance sampling before average
-    #     elementwise_loss, pos_neg_loss = self._compute_dqn_loss(samples)
-    #     loss = torch.mean(elementwise_loss * weights)
-
-    #     self.optimizer.zero_grad()
-    #     loss.backward()
-    #     self.optimizer.step()
-
-    #     # PER: update priorities
-    #     loss_for_prior = elementwise_loss.detach().cpu().numpy()
-    #     pos_neg_loss_np = pos_neg_loss.detach().cpu().numpy()
-    #     new_deltas = np.squeeze(loss_for_prior)
-
-    #     if self.positive_reward != 0:
-
-    #         positive_indices = np.where(np.squeeze(pos_neg_loss_np) > 0)
-    #         # neg_indices = np.where(np.squeeze(pos_neg_loss_np) <= 0)
-    #         new_deltas[positive_indices] += self.positive_reward
-
-    #     if self.staleness != 0:
-    #         # new_priorities = np.abs(np.squeeze(loss_for_prior) - (self.staleness * self.memory.last_played_buf[indices]))
-    #         new_deltas = np.abs(np.squeeze(loss_for_prior) - (self.staleness * self.global_step_count))
-
-    #     self.memory.delta_buf[indices] = new_deltas
-    #     self.memory.last_played_buf = [self.global_step_count] * len(indices)
-
-    #     new_priorities = new_deltas
-
-    #     if self.differential:
-    #         new_priorities = np.abs(self.memory.delta_buf[indices] - np.squeeze(loss_for_prior))
-
-    #     new_priorities += self.prior_eps
-
-    #     self.memory.update_priorities(indices, new_priorities)
-
-    #     return loss.item()
 
     def update_beta(self, frame_idx):
         fraction = min(frame_idx / self.num_frames, 1.0)
@@ -347,7 +296,7 @@ class DQNAgent2:
                 self._plot(episode, scores, losses, self.epsilons)
 
             if episode == num_episodes:
-                break 
+                break
         self.env.close()
 
     def test(self) -> List[np.ndarray]:
