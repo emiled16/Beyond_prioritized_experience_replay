@@ -188,6 +188,7 @@ class DQNAgent:
 
     def update_priority_(self, selected_memory, samples, weights, indices, elementwise_loss, pos_neg_loss):
         # PER: update priorities
+
         loss_for_prior = elementwise_loss.detach().cpu().numpy()
         pos_neg_loss_np = pos_neg_loss.detach().cpu().numpy()
         new_deltas = np.squeeze(loss_for_prior)

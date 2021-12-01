@@ -1,0 +1,18 @@
+{"level":"info","time":"2021-12-01T03:51:19Z","message":"Thank you for trying Cloudflare Tunnel. Doing so, without a Cloudflare account, is a quick way to experiment and try it out. However, be aware that these account-less Tunnels have no uptime guarantee. If you intend to use Tunnels in production you should use a pre-created named tunnel by following: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps"}
+{"level":"info","time":"2021-12-01T03:51:19Z","message":"Requesting new quick Tunnel on trycloudflare.com..."}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"+--------------------------------------------------------------------------------------------+"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"|  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"|  https://creature-trio-adventures-endless.trycloudflare.com                                |"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"+--------------------------------------------------------------------------------------------+"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp /etc/cloudflared /usr/local/etc/cloudflared]"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"Version 2021.11.0"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"GOOS: linux, GOVersion: devel +a84af465cb Mon Aug 9 10:31:00 2021 -0700, GoArch: amd64"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"Settings: map[logfile:./cloudflared.log metrics:localhost:45678 protocol:quic url:ssh://localhost:22]"}
+{"level":"info","autoupdateFreq":86400000,"time":"2021-12-01T03:51:20Z","message":"Autoupdate frequency is set"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"Generated Connector ID: ae679c52-46a7-4af0-8527-de63534d4eff"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"Initial protocol quic"}
+{"level":"info","time":"2021-12-01T03:51:20Z","message":"Starting metrics server on 127.0.0.1:45678/metrics"}
+{"level":"info","connIndex":0,"location":"ATL","time":"2021-12-01T03:51:21Z","message":"Connection 305b9ce3-ac7b-463a-a0b9-8d7bdf1db005 registered"}
+{"level":"info","connIndex":1,"location":"IAD","time":"2021-12-01T03:51:21Z","message":"Connection c4a0b303-83e5-4c6d-8e26-db2cdca10c07 registered"}
+{"level":"info","connIndex":2,"location":"ATL","time":"2021-12-01T03:51:22Z","message":"Connection cca15843-bbda-49ca-a74e-6903558355de registered"}
+{"level":"info","connIndex":3,"location":"IAD","time":"2021-12-01T03:51:23Z","message":"Connection 62bd1c35-2222-4ab7-b365-d32ba3c6e492 registered"}
