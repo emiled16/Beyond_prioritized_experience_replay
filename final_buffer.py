@@ -136,7 +136,7 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         self.max_priority = max(self.max_priority, max_priority_local)
 
         t = len(self.sum_tree.tree)/2
-        indices_ = indices + t
+        indices_ = np.array(indices) + t
 
         self.sum_tree.tree[indices_] = priorities ** self.alpha
         self.min_tree.tree[indices_] = priorities ** self.alpha
