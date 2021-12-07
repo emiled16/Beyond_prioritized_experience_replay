@@ -7,9 +7,13 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
+from collections import Counter
+import collections
 
 from final_buffer import PrioritizedReplayBuffer
 from final_model import Network
+
+
 
 
 class DQNAgent:
@@ -192,11 +196,34 @@ class DQNAgent:
         loss_for_prior = elementwise_loss.detach().cpu().numpy()
         pos_neg_loss_np = pos_neg_loss.detach().cpu().numpy()
         new_deltas = np.squeeze(loss_for_prior)
+       
 
         if self.positive_reward != 0:
             positive_indices = np.where(np.squeeze(pos_neg_loss_np) > 0)
-            # neg_indices = np.where(np.squeeze(pos_neg_loss_np) <= 0)
-            new_deltas[positive_indices] += self.positive_reward
+            neg_indices = np.where(np.squeeze(pos_neg_loss_np) <= 0)
+
+            #round off to 1 decimal
+            pos_neg_loss_np_a=np.around((np.array(pos_neg_loss_np)),decimals=1)
+            pos=pos_neg_loss_np_a[positive_indices]
+            neg=pos_neg_loss_np_a[neg_indices]
+            #print("positive",pos)
+            #print("negative",np.abs(neg))
+            common_loss=np.intersect1d(pos,np.abs(neg))
+            positive_index=[]
+            for i in range(len(common_loss)):
+                temp=np.where(common_loss[i]==pos)
+                #print("list",temp)
+                positive_index.append(temp[0].tolist())
+            #print(len(positive_index))
+            if(len(positive_index)!=0):
+                priority_positive_index=np.hstack(positive_index)
+                #print(priority_positive_index)
+            else: 
+                priority_positive_index=[]
+            #print("indices are", priority_positive_index)  
+            #print("before",new_deltas[priority_positive_index])  
+            new_deltas[priority_positive_index] += self.positive_reward
+            #print("after",new_deltas[priority_positive_index])
 
         if self.staleness != 0:
             new_deltas = np.abs(np.squeeze(loss_for_prior) - (self.staleness * self.global_step_count))
