@@ -28,24 +28,31 @@ The code in this repo is based on the following repo:
 Here are some of the results we got:
 
 - Performance for priority-based PER in different environments: 
-<p align="center">
+
 ![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/env.JPG)
-</p>
+
 - Performance for priority-based PER with different memory size(Cartpole v0)
-![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/memory.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/memory.JPG)
 - Performance for priority-based PER with different stalness Coeff (Cartpole v0)
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/priority_staleness.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/priority_staleness.JPG)
 - Performance for rank-based PER with different stalness Coeff (Cartpole v0)
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/rank_staleness.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/rank_staleness.JPG)
 - Performance for priority-based PER with different Positive penalty coefficients (Cartpole
 v0)
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/priority_positive.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/priority_positive.JPG)
 - Performance for rank-based PER with different positive penalty coeff (Cartpole v0)
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/rank_positive.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/rank_positive.JPG)
 - Performance for priority-based PER without and with differential method (Cartpole v0)
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/priority_diff.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/priority_diff.JPG)
 - Performance for rank-based PER without and with differential method (Cartpole v0)
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/rank_diff.JPG)</p>
+
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/rank_diff.JPG)
 - Performance for the 3 different types of PER (priority-based, rank-based and hybrid approach comibining positive penalty and staleness)(Cartpole v0)
 
-<p align="center">![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/all.JPG)</p>
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/all.JPG)
