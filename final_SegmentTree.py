@@ -3,8 +3,6 @@
 
 import operator
 from typing import Callable
-from typing import Dict, List
-
 
 
 class SegmentTree:
@@ -67,25 +65,20 @@ class SegmentTree:
         idx += self.capacity
         self.tree[idx] = val
 
-        # idx //= 2
-        # while idx >= 1:
-        #     self.tree[idx] = self.operation(self.tree[2 * idx], self.tree[2 * idx + 1])
-        #     idx //= 2
-
     def is_leaf(self, idx):
-        if (idx<(2*self.capacity)) and (idx>=self.capacity):
+        """Check if a node is a leaf."""
+        if (idx < (2*self.capacity)) and (idx >= self.capacity):
             return True
         return False
 
     def update_rec(self, idx):
+        """Update the entire tree recurisvely."""
         left_idx = 2*idx
         right_idx = left_idx + 1
         left_child = self.tree[int(left_idx)]
         right_child = self.tree[int(right_idx)]
 
         if self.is_leaf(left_idx):
-
-            
             res = self.operation(left_child, right_child)
             self.tree[idx] = res
             return res
@@ -94,8 +87,8 @@ class SegmentTree:
             self.tree[idx] = res
             return res
 
-
     def update_tree(self):
+        """Update the entire tree recurisvely - Base function."""
         root_idx = 1
         self.update_rec(root_idx)
 
@@ -131,9 +124,7 @@ class SumSegmentTree(SegmentTree):
 
     def retrieve(self, upperbound: float) -> int:
         """Find the highest index `i` about upper bound in the tree"""
-        # TODO: Check assert case and fix bug
         assert 0 <= upperbound <= self.sum() + 1e-5, "upperbound: {}".format(upperbound)
-
         idx = 1
 
         while idx < self.capacity:  # while non-leaf

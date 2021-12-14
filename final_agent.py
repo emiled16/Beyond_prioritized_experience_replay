@@ -7,13 +7,10 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from IPython.display import clear_output
-from collections import Counter
-import collections
+
 
 from final_buffer import PrioritizedReplayBuffer
 from final_model import Network
-
-
 
 
 class DQNAgent:
@@ -107,6 +104,8 @@ class DQNAgent:
         self.beta = beta
         self.prior_eps = prior_eps
         self.memory = {}
+        # Using a dictionnary for the PER corresponding to the right type
+        #(Priority based, Rank based, Hybrid)
         if priority_based in ['rank', 'priority']:
             self.memory[priority_based] = PrioritizedReplayBuffer(
                 obs_dim, memory_size, batch_size, alpha, priority_based)
@@ -116,20 +115,20 @@ class DQNAgent:
             self.memory['rank'] = PrioritizedReplayBuffer(
                         obs_dim, memory_size, batch_size, alpha, 'rank')
 
-        # networks: dqn, dqn_target
+        # Networks: dqn, dqn_target
         self.dqn = Network(obs_dim, action_dim).to(self.device)
         self.dqn_target = Network(obs_dim, action_dim).to(self.device)
         self.dqn_target.load_state_dict(self.dqn.state_dict())
         self.dqn_target.eval()
 
-        # optimizer
+        # Optimizer
         self.optimizer = optim.Adam(self.dqn.parameters())
 
-        # mode: train / test
+        # Mode: train / test
         self.is_test = False
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
-        """Select an action from the input state."""
+        """Select an action from the input state. (epsilon-greedy)"""
         # epsilon greedy policy
         if self.epsilon > np.random.random():
             selected_action = self.env.action_space.sample()
@@ -148,10 +147,10 @@ class DQNAgent:
         return next_state, reward, done
 
     def update_model(self):
-
+        """Main function to update the PER and Network."""
         loss_p = 0
         loss_r = 0
-
+        # Sample from the corresponding PER
         if self.priority_based in ['priority', 'hybrid']:
             samples_p, weights_p, indices_p = self.memory_sample(
                 self.memory['priority'])
@@ -165,12 +164,12 @@ class DQNAgent:
             # PER: importance sampling before average
             elementwise_loss_r, pos_neg_loss_r = self._compute_dqn_loss(samples_r)
             loss_r = torch.mean(elementwise_loss_r * weights_r)
-
+        # add the losses and do a gradient backward step
         loss = loss_r + loss_p
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
+        # update the corresponding Experience Replay(s)
         if self.priority_based in ['priority', 'hybrid']:
             self.update_priority_(self.memory['priority'], samples_p, weights_p, indices_p, elementwise_loss_p, pos_neg_loss_p)
 
@@ -191,40 +190,33 @@ class DQNAgent:
         return samples, weights, indices
 
     def update_priority_(self, selected_memory, samples, weights, indices, elementwise_loss, pos_neg_loss):
-        # PER: update priorities
+        """Update the priorities depending on the options passed."""
 
         loss_for_prior = elementwise_loss.detach().cpu().numpy()
         pos_neg_loss_np = pos_neg_loss.detach().cpu().numpy()
         new_deltas = np.squeeze(loss_for_prior)
-       
-
+        # Positive Bias
         if self.positive_reward != 0:
             positive_indices = np.where(np.squeeze(pos_neg_loss_np) > 0)
             neg_indices = np.where(np.squeeze(pos_neg_loss_np) <= 0)
 
-            #round off to 1 decimal
-            pos_neg_loss_np_a=np.around((np.array(pos_neg_loss_np)),decimals=1)
-            pos=pos_neg_loss_np_a[positive_indices]
-            neg=pos_neg_loss_np_a[neg_indices]
-            #print("positive",pos)
-            #print("negative",np.abs(neg))
-            common_loss=np.intersect1d(pos,np.abs(neg))
-            positive_index=[]
-            for i in range(len(common_loss)):
-                temp=np.where(common_loss[i]==pos)
-                #print("list",temp)
-                positive_index.append(temp[0].tolist())
-            #print(len(positive_index))
-            if(len(positive_index)!=0):
-                priority_positive_index=np.hstack(positive_index)
-                #print(priority_positive_index)
-            else: 
-                priority_positive_index=[]
-            #print("indices are", priority_positive_index)  
-            #print("before",new_deltas[priority_positive_index])  
-            new_deltas[priority_positive_index] += self.positive_reward
-            #print("after",new_deltas[priority_positive_index])
+            # round off to 1 decimal
+            pos_neg_loss_np_a = np.around((np.array(pos_neg_loss_np)), decimals=1)
+            pos = pos_neg_loss_np_a[positive_indices]
+            neg = pos_neg_loss_np_a[neg_indices]
 
+            common_loss = np.intersect1d(pos, np.abs(neg))
+            positive_index = []
+            for i in range(len(common_loss)):
+                temp = np.where(common_loss[i] == pos)
+                positive_index.append(temp[0].tolist())
+
+            if(len(positive_index) != 0):
+                priority_positive_index = np.hstack(positive_index)
+            else:
+                priority_positive_index = [] 
+            new_deltas[priority_positive_index] += self.positive_reward
+        # Staleness (priority for steps not played since a long time)
         if self.staleness != 0:
             new_deltas = np.abs(np.squeeze(loss_for_prior) - (self.staleness * self.global_step_count))
 
@@ -232,7 +224,7 @@ class DQNAgent:
         selected_memory.last_played_buf[indices] = [self.global_step_count] * len(indices)
 
         new_priorities = new_deltas
-
+        # Differential
         if self.differential:
             new_priorities = np.abs(selected_memory.delta_buf[indices] - np.squeeze(loss_for_prior))
 
@@ -241,10 +233,12 @@ class DQNAgent:
         selected_memory.update_priorities(indices, new_priorities)
 
     def update_beta(self, frame_idx):
+        """Annealing Beta coeff to 1."""
         fraction = min(frame_idx / self.num_frames, 1.0)
         self.beta = self.beta + fraction * (1.0 - self.beta)
 
     def update_eps(self):
+        """Update the epsilon parameter for epsilon-greedy."""
         self.epsilon = max(
                     self.min_epsilon, self.epsilon - (
                         self.max_epsilon - self.min_epsilon
@@ -273,6 +267,7 @@ class DQNAgent:
             # step
             next_state, reward, done = self.step(action)
 
+            # store the transitions
             transition['obs'] = state
             transition['next_obs'] = next_state
             transition['action'] = action

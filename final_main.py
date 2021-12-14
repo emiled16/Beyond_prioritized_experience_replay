@@ -2,7 +2,7 @@
 import sys
 import os
 import random
-from typing import Dict, List, Tuple
+from typing import List
 
 import gym
 import matplotlib.pyplot as plt
@@ -10,11 +10,12 @@ import numpy as np
 import torch
 from final_agent import DQNAgent
 
+
 def run_experiment(env_id="CartPole-v0", seed=777, num_episodes=2000, memory_size=10000,
-                  batch_size=32, target_update=100, epsilon_decay=1/2000,
-                  alpha: float = 0.2, beta: float = 0.6, prior_eps: float = 1e-6,
-                  staleness=0.0001, positive_reward=0.0001, differential=False,
-                  priority_based='rank', episodic=False):
+                   batch_size=32, target_update=100, epsilon_decay=1/2000,
+                   alpha=0.2, beta=0.6, prior_eps=1e-6,
+                   staleness=0.0001, positive_reward=0.0001, differential=False,
+                   priority_based='rank', episodic=False):
 
     IN_COLAB = "google.colab" in sys.modules
 
@@ -40,15 +41,17 @@ def run_experiment(env_id="CartPole-v0", seed=777, num_episodes=2000, memory_siz
     seed_torch(seed)
     env.seed(seed)
 
-    # train
+    # Initilaize the agent
     agent = DQNAgent(env=env, memory_size=memory_size, batch_size=batch_size,
-                    target_update=target_update, epsilon_decay=epsilon_decay,
-                    alpha=alpha, beta=beta, prior_eps=prior_eps, staleness=staleness,
-                    positive_reward=positive_reward, differential=differential,
-                    priority_based=priority_based, episodic=episodic)
-
+                     target_update=target_update, epsilon_decay=epsilon_decay,
+                     alpha=alpha, beta=beta, prior_eps=prior_eps,
+                     staleness=staleness,
+                     positive_reward=positive_reward,
+                     differential=differential,
+                     priority_based=priority_based, episodic=episodic)
+    # Start the training process
     agent.train(num_episodes)
-
+    # Test the agent's performance'
     frames = agent.test()
 
     if IN_COLAB:  # for colab
@@ -98,4 +101,3 @@ def run_experiment(env_id="CartPole-v0", seed=777, num_episodes=2000, memory_siz
 
         # display
         display_frames_as_gif(frames)
-

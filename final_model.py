@@ -1,5 +1,3 @@
-from typing import Dict, List, Tuple
-
 import torch
 import torch.nn as nn
 
@@ -10,10 +8,10 @@ class Network(nn.Module):
         super(Network, self).__init__()
 
         self.layers = nn.Sequential(
-            nn.Linear(in_dim, 128), 
+            nn.Linear(in_dim, 128),
             nn.ReLU(),
-            nn.Linear(128, 128), 
-            nn.ReLU(), 
+            nn.Linear(128, 128),
+            nn.ReLU(),
             nn.Linear(128, out_dim)
         )
 

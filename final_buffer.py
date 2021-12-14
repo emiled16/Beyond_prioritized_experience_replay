@@ -124,46 +124,49 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         )
 
     def update_priorities(self, indices: List[int], quantities: np.ndarray):
+        """Update the prioirities based on the right type of PER used."""
         if self.priority_based == 'rank':
             self.update_priorities_rank(indices, quantities)
         if self.priority_based == 'priority':
             self.update_priorities_priority(indices, quantities)
 
     def update_priorities_priority(self, indices: List[int], priorities: np.ndarray):
+        """Update the priorities if priority based PER is used."""
         assert len(indices) == len(priorities)
 
         max_priority_local = np.max(priorities)
         self.max_priority = max(self.max_priority, max_priority_local)
 
-        t = len(self.sum_tree.tree)/2
-        indices_ = [int(o) + int(t) for o in indices]
+        # t = len(self.sum_tree.tree)/2
+        # indices_ = [int(o) + int(t) for o in indices]
         # indices_ = np.array(indices).astype(int) + int(t)
 
         for i, idx in enumerate(indices):
-          self.sum_tree.tree[idx] = priorities[i] ** self.alpha
-          self.min_tree.tree[idx] = priorities[i] ** self.alpha
+            self.sum_tree.tree[idx] = priorities[i] ** self.alpha
+            self.min_tree.tree[idx] = priorities[i] ** self.alpha
 
         self.sum_tree.update_tree()
         self.min_tree.update_tree()
 
     def update_priorities_rank(self, indices: List[int], deltas: np.ndarray):
-        """Update priorities of sampled transitions."""
+        """Update the priorities if rank based PER is used."""
         assert len(indices) == len(deltas)
 
+        # Sorting ALL elements of the buffer (which may take some time)
         deltas = deltas.reshape(-1)
         self.delta_buf[indices] = deltas
         temp = self.delta_buf.argsort()[::-1]  # from biggest = 1 ....
         ranks = np.empty_like(temp)
         ranks[temp] = np.arange(len(self.delta_buf)) + self.offset
-
+        # compute the prioirties based on the rank
         priorities = (1/ranks)**self.alpha
         max_priority_local = np.max(priorities)
         self.max_priority = max(self.max_priority, max_priority_local)
         t = len(self.sum_tree.tree)/2
-
+        # update
         self.sum_tree.tree[int(t):] = priorities
         self.min_tree.tree[int(t):] = priorities
-
+        # update the trees recurisvely
         self.sum_tree.update_tree()
         self.min_tree.update_tree()
 
