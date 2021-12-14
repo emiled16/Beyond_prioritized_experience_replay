@@ -29,7 +29,8 @@ Here are some of the results we got:
 
 - Performance for priority-based PER in different environments: 
 <p align="center">
-![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/env.JPG)</p>
+![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/env.JPG)
+</p>
 - Performance for priority-based PER with different memory size(Cartpole v0)
 ![alt text](https://github.com/emiled16/Beyond_prioritized_experience_replay/blob/master/images/memory.JPG)</p>
 - Performance for priority-based PER with different stalness Coeff (Cartpole v0)
