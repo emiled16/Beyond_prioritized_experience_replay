@@ -1,6 +1,6 @@
 # Beyond Prioritized Experience Replay
 
-Ablation study of the [Prioritized Experience Replay](https://arxiv.org/pdf/1511.05952.pdf) presentend by Schau et al. 
+Ablation study of the [Prioritized Experience Replay](https://arxiv.org/abs/1511.05952) presentend by Schau et al. 
 
 
 
